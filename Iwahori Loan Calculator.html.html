@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #0056b3;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input[type="number"], input[type="button"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        input[type="button"] {
+            background-color: #ffeb3b;
+            border: none;
+            color: #000;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #0056b3;
+            color: #fff;
+        }
+        td {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+	<h1>Iwahori Multipurpose Cooperative</h1>
+        <h1>Loan Amortization Calculator</h1>
+        <label for="principal">Principal (in pesos):</label>
+        <input type="number" id="principal" placeholder="Enter loan amount" />
+        
+        <label for="interest">Monthly Interest Rate (as a percentage):</label>
+        <input type="number" id="interest" placeholder="Enter monthly interest rate" />
+
+        <label for="months">Number of Months:</label>
+        <input type="number" id="months" placeholder="Enter number of months" />
+
+        <input type="button" value="Calculate" onclick="calculateAmortization()" />
+
+        <h2>Amortization Schedule</h2>
+        <table id="amortizationTable">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Monthly Amortization</th>
+                    <th>Principal</th>
+                    <th>Interest</th>
+                    <th>Remaining Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be populated here -->
+            </tbody>
+        </table>
+        <button onclick="exportToExcel()">Export to Excel</button>
+    </div>
+
+    <script>
+        function calculateAmortization() {
+            const principal = parseFloat(document.getElementById('principal').value);
+            const monthlyInterestRate = parseFloat(document.getElementById('interest').value) / 100;
+            const months = parseInt(document.getElementById('months').value);
+            
+            if (isNaN(principal) || isNaN(monthlyInterestRate) || isNaN(months)) {
+                alert('Please enter valid numbers');
+                return;
+            }
+
+            let balance = principal;
+            let totalPayment = 0;
+            let amortizationData = '';
+
+            for (let i = 1; i <= months; i++) {
+                const interest = balance * monthlyInterestRate;
+                const payment = (principal * monthlyInterestRate) / (1 - Math.pow(1 + monthlyInterestRate, -months));
+                const principalPayment = payment - interest;
+                balance -= principalPayment;
+                
+                amortizationData += `
+                    <tr>
+                        <td>${i}</td>
+                        <td>${payment.toFixed(2)}</td>
+                        <td>${principalPayment.toFixed(2)}</td>
+                        <td>${interest.toFixed(2)}</td>
+                        <td>${balance.toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+
+            document.querySelector('#amortizationTable tbody').innerHTML = amortizationData;
+        }
+
+        function exportToExcel() {
+            const table = document.getElementById('amortizationTable').outerHTML;
+            const uri = 'data:application/vnd.ms-excel;base64,';
+            const template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/xhtml1/strict" xmlns:html="http://www.w3.org/TR/xhtml1/strict"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Sheet1</x:Name><x:WorksheetOptions><x:Print><x:FitToPage/></x:Print></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>{table}</body></html>';
+            const base64 = s => window.btoa(unescape(encodeURIComponent(s)));
+            const format = (s, c) => s.replace(/{(\w+)}/g, (m, p) => c[p]);
+            const ctx = {worksheet: 'Sheet1', table: table};
+            const link = document.createElement('a');
+            link.href = uri + base64(format(template, ctx));
+            link.download = 'amortization_schedule.xls';
+            link.click();
+        }
+    </script>
+</body>
+</html>
